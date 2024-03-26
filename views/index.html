@@ -1,25 +1,70 @@
-{{ block "index" .}}
+{{ define "index" }}
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script
-      src="https://unpkg.com/htmx.org@1.9.11"
-      integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://unpkg.com/htmx.org@1.9.11"
+        integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
+        crossorigin="anonymous"></script>
     <title>Document</title>
-  </head>
-  <body>
-    <div id="count">
-        {{ template "count" . }}
-    </div>
-    <button hx-target="#count" hx-post="/count">Count</button>
-  </body>
+</head>
+
+<body>
+    {{ template "form" .Form }}
+    <hr />
+    {{template "display" .Data }}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", (event) => {
+            document.body.addEventListener("htmx:beforeSwap", (evt) => {
+                if (evt.detail.xhr.status === 422) {
+                    evt.detail.shouldSwap = true;
+                    evt.detail.isError = false;
+                }
+            });
+        });
+    </script>
+
+</body>
+
 </html>
-{{end}} 
-{{ block "count" .}}
- Count {{ .Count }} 
+
 {{ end }}
+
+{{ define "form" }}
+<form hx-swap="outerHTML" hx-post="/contacts">
+    name: <input {{ if .Values.name }} value="{{ .Values.name }}" {{end}} type="text" name="name" />
+    email: <input {{ if .Values.email}} value="{{ .Values.email}}" {{end}} type="text" name="email" />
+    {{ if .Errors.email }}
+    <div style="color: red;">{{ .Errors.email }}</div>
+    {{end}}
+    <button type="submit">Create a Contact</button>
+</form>
+{{end}}
+
+{{ define "display" }}
+<div id="contacts" style="display: flex; flex-direction: column; gap: 1;">
+    {{range .Contacts}}
+    {{ template "contact" . }}
+    {{end}}
+
+</div>
+{{end}}
+
+{{ define "contact" }}
+
+<div>
+    Name: <span>{{.Name}}</span>
+    Email: <span>{{.Email}}</span>
+</div>
+{{end}}
+
+{{ define "oob-contact" }}  
+<div hx-swap-oob="afterbegin" id="contacts" >
+    {{ template "contact" . }}
+</div>
+{{end}}
+
